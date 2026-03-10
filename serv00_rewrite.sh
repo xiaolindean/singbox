@@ -367,21 +367,21 @@ rand_name() {
 download_binaries() {
     cd "$WORKDIR" || return 1
 
-    local gh_base="https://github.com/yonggekkk/Cloudflare_vless_trojan/releases/download/serv00"
+    local gh_base="https://raw.githubusercontent.com/xiaolindean/singbox/refs/heads/main"
     local sb_urls=(
         "${gh_base}/sb"
         "https://ghproxy.com/${gh_base}/sb"
         "https://mirror.ghproxy.com/${gh_base}/sb"
-        "https://gh.idayer.com/${gh_base}/sb"
+        "https://cdn.jsdelivr.net/gh/xiaolindean/singbox@main/sb"
     )
     local cf_urls=(
         "${gh_base}/server"
         "https://ghproxy.com/${gh_base}/server"
         "https://mirror.ghproxy.com/${gh_base}/server"
-        "https://gh.idayer.com/${gh_base}/server"
+        "https://cdn.jsdelivr.net/gh/xiaolindean/singbox@main/server"
     )
 
-    # 依次尝试镜像列表，返回第一个下载成功的文件
+    # 依次尝试镜像列表
     try_mirrors() {
         local dest="$1" label="$2"; shift 2
         local urls=("$@")
@@ -396,12 +396,29 @@ download_binaries() {
             fi
             yellow "$label 该源失败，尝试下一个..."
         done
-        red "$label 所有下载源均失败，请检查服务器网络"
+        red "$label 所有下载源均失败"
+        red "请手动上传文件到 $WORKDIR："
+        red "  sing-box  → 上传后重命名为 sb_bin"
+        red "  cloudflared → 上传后重命名为 cf_bin"
         return 1
     }
 
-    # sing-box
-    if [[ ! -s "$WORKDIR/sb.txt" ]]; then
+    # ── sing-box ──
+    # 优先检测手动上传的文件 sb_bin
+    if [[ -f "$WORKDIR/sb_bin" ]]; then
+        local sz; sz=$(stat -c%s "$WORKDIR/sb_bin" 2>/dev/null || echo 0)
+        if (( sz >= 1048576 )); then
+            local sb_name; sb_name=$(rand_name)
+            mv "$WORKDIR/sb_bin" "$WORKDIR/$sb_name"
+            chmod +x "$WORKDIR/$sb_name"
+            echo "$sb_name" > "$WORKDIR/sb.txt"
+            SBB="$sb_name"
+            green "sing-box 使用手动上传的文件 (${sz} bytes)"
+        else
+            red "sb_bin 文件大小异常 (${sz}B)，请重新上传"
+            return 1
+        fi
+    elif [[ ! -s "$WORKDIR/sb.txt" ]]; then
         local sb_name; sb_name=$(rand_name)
         try_mirrors "$WORKDIR/$sb_name" "sing-box" "${sb_urls[@]}" || return 1
         echo "$sb_name" > "$WORKDIR/sb.txt"
@@ -416,8 +433,22 @@ download_binaries() {
         }
     fi
 
-    # cloudflared
-    if [[ ! -s "$WORKDIR/ag.txt" ]]; then
+    # ── cloudflared ──
+    # 优先检测手动上传的文件 cf_bin
+    if [[ -f "$WORKDIR/cf_bin" ]]; then
+        local sz; sz=$(stat -c%s "$WORKDIR/cf_bin" 2>/dev/null || echo 0)
+        if (( sz >= 1048576 )); then
+            local ag_name; ag_name=$(rand_name)
+            mv "$WORKDIR/cf_bin" "$WORKDIR/$ag_name"
+            chmod +x "$WORKDIR/$ag_name"
+            echo "$ag_name" > "$WORKDIR/ag.txt"
+            AGG="$ag_name"
+            green "cloudflared 使用手动上传的文件 (${sz} bytes)"
+        else
+            red "cf_bin 文件大小异常 (${sz}B)，请重新上传"
+            return 1
+        fi
+    elif [[ ! -s "$WORKDIR/ag.txt" ]]; then
         local ag_name; ag_name=$(rand_name)
         try_mirrors "$WORKDIR/$ag_name" "cloudflared" "${cf_urls[@]}" || return 1
         echo "$ag_name" > "$WORKDIR/ag.txt"
@@ -433,6 +464,7 @@ download_binaries() {
     fi
     cd - > /dev/null
 }
+
 
 
 # ── 生成 Reality 密钥对 ───────────────────────────────────────────────────────
