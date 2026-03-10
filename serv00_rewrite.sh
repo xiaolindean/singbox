@@ -334,7 +334,7 @@ download_binary() {
     green "下载 $label ..."
     if curl -fsSL --max-time 60 --retry 3 --retry-delay 3 -o "$dest" "$url" 2>/dev/null; then
         local sz
-        sz=$(stat -c%s "$dest" 2>/dev/null || echo 0)
+        sz=$(stat -f%z "$dest" 2>/dev/null || stat -c%z "$dest" 2>/dev/null || wc -c < "$dest" 2>/dev/null || echo 0)
         if (( sz >= min_size )); then
             green "$label 下载完成 (${sz} bytes)"
             chmod +x "$dest"
@@ -344,7 +344,7 @@ download_binary() {
     yellow "$label curl 下载失败，切换到 wget..."
     wget -q --timeout=60 --tries=3 -O "$dest" "$url" 2>/dev/null
     local sz
-    sz=$(stat -c%s "$dest" 2>/dev/null || echo 0)
+    sz=$(stat -f%z "$dest" 2>/dev/null || stat -c%z "$dest" 2>/dev/null || wc -c < "$dest" 2>/dev/null || echo 0)
     if (( sz >= min_size )); then
         green "$label wget 下载完成 (${sz} bytes)"
         chmod +x "$dest"
@@ -388,7 +388,7 @@ download_binaries() {
         for url in "${urls[@]}"; do
             green "尝试 $label : $url"
             if curl -fsSL --max-time 60 --retry 2 -o "$dest" "$url" 2>/dev/null; then
-                local sz; sz=$(stat -c%s "$dest" 2>/dev/null || echo 0)
+                local sz; sz=$(stat -f%z "$dest" 2>/dev/null || stat -c%z "$dest" 2>/dev/null || wc -c < "$dest" 2>/dev/null || echo 0)
                 if (( sz >= 1048576 )); then
                     green "$label 下载成功 (${sz} bytes)"
                     chmod +x "$dest"; return 0
