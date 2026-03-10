@@ -406,7 +406,7 @@ download_binaries() {
     # ── sing-box ──
     # 优先检测手动上传的文件 sb_bin
     if [[ -f "$WORKDIR/sb_bin" ]]; then
-        local sz; sz=$(stat -c%s "$WORKDIR/sb_bin" 2>/dev/null || echo 0)
+        local sz; sz=$(stat -f%z "$WORKDIR/sb_bin" 2>/dev/null || stat -c%z "$WORKDIR/sb_bin" 2>/dev/null || wc -c < "$WORKDIR/sb_bin" 2>/dev/null || echo 0)
         if (( sz >= 1048576 )); then
             local sb_name; sb_name=$(rand_name)
             mv "$WORKDIR/sb_bin" "$WORKDIR/$sb_name"
@@ -436,7 +436,7 @@ download_binaries() {
     # ── cloudflared ──
     # 优先检测手动上传的文件 cf_bin
     if [[ -f "$WORKDIR/cf_bin" ]]; then
-        local sz; sz=$(stat -c%s "$WORKDIR/cf_bin" 2>/dev/null || echo 0)
+        local sz; sz=$(stat -f%z "$WORKDIR/cf_bin" 2>/dev/null || stat -c%z "$WORKDIR/cf_bin" 2>/dev/null || wc -c < "$WORKDIR/cf_bin" 2>/dev/null || echo 0)
         if (( sz >= 1048576 )); then
             local ag_name; ag_name=$(rand_name)
             mv "$WORKDIR/cf_bin" "$WORKDIR/$ag_name"
