@@ -1193,7 +1193,12 @@ install_singbox() {
     is_installed && { yellow "已安装，请先选择 2 卸载再重装"; return; }
 
     sleep 1
-    cd "$WORKDIR" || return 1
+    # 确保目录存在（卸载后重装时可能需要重新创建）
+    devil www add "${USERNAME}.${ADDRESS}" php > /dev/null 2>&1
+    mkdir -p "$WORKDIR" "$FILE_PATH"
+    chmod 777 "$WORKDIR"
+    devil binexec on > /dev/null 2>&1
+    cd "$WORKDIR" || { red "无法进入工作目录：$WORKDIR"; return 1; }
 
     # 1. 收集用户输入
     echo; prompt_ip
