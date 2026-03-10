@@ -62,14 +62,14 @@ resolve_ip() {
 
 # 读取已保存的运行时配置
 load_runtime_conf() {
-    [[[ -f "$WORKDIR/ipone.txt"      ]] && IP=$(<"$WORKDIR/ipone.txt")
-    [[[ -f "$WORKDIR/UUID.txt"       ]] && UUID=$(<"$WORKDIR/UUID.txt")
-    [[[ -f "$WORKDIR/reym.txt"       ]] && REYM=$(<"$WORKDIR/reym.txt")
-    [[[ -f "$WORKDIR/ARGO_DOMAIN.log"]] && ARGO_DOMAIN=$(<"$WORKDIR/ARGO_DOMAIN.log")
-    [[[ -f "$WORKDIR/ARGO_AUTH.log"  ]] && ARGO_AUTH=$(<"$WORKDIR/ARGO_AUTH.log")
-    [[[ -f "$WORKDIR/sb.txt"         ]] && SBB=$(<"$WORKDIR/sb.txt")
-    [[[ -f "$WORKDIR/ag.txt"         ]] && AGG=$(<"$WORKDIR/ag.txt")
-    if [[[ -f "$WORKDIR/config.json" ]]; then
+    [[ -f "$WORKDIR/ipone.txt"      ]] && IP=$(<"$WORKDIR/ipone.txt")
+    [[ -f "$WORKDIR/UUID.txt"       ]] && UUID=$(<"$WORKDIR/UUID.txt")
+    [[ -f "$WORKDIR/reym.txt"       ]] && REYM=$(<"$WORKDIR/reym.txt")
+    [[ -f "$WORKDIR/ARGO_DOMAIN.log" ]] && ARGO_DOMAIN=$(<"$WORKDIR/ARGO_DOMAIN.log")
+    [[ -f "$WORKDIR/ARGO_AUTH.log"  ]] && ARGO_AUTH=$(<"$WORKDIR/ARGO_AUTH.log")
+    [[ -f "$WORKDIR/sb.txt"         ]] && SBB=$(<"$WORKDIR/sb.txt")
+    [[ -f "$WORKDIR/ag.txt"         ]] && AGG=$(<"$WORKDIR/ag.txt")
+    if [[ -f "$WORKDIR/config.json" ]]; then
         VLESS_PORT=$(jq -r '.inbounds[] | select(.tag=="vless-reality-vesion") | .listen_port' "$WORKDIR/config.json" 2>/dev/null)
         VMESS_PORT=$(jq -r '.inbounds[] | select(.tag=="vmess-ws-in")          | .listen_port' "$WORKDIR/config.json" 2>/dev/null)
         HY2_PORT=$(jq  -r '.inbounds[] | select(.tag=="hysteria-in1")          | .listen_port' "$WORKDIR/config.json" 2>/dev/null)
@@ -80,7 +80,7 @@ load_runtime_conf() {
 
 # 检查是否已安装
 is_installed() {
-    [[[ -f "$WORKDIR/config.json" && -f "$WORKDIR/sb.txt" ]]
+    [[ -f "$WORKDIR/config.json" && -f "$WORKDIR/sb.txt" ]]
 }
 
 # ── 用户交互：收集安装参数 ────────────────────────────────────────────────────
@@ -377,7 +377,7 @@ download_binaries() {
         SBB="$sb_name"
     else
         SBB=$(<"$WORKDIR/sb.txt")
-        [[[ -f "$WORKDIR/$SBB" ]] || {
+        [[ -f "$WORKDIR/$SBB" ]] || {
             local sb_name; sb_name=$(rand_name)
             download_binary "$sb_url" "$WORKDIR/$sb_name" "sing-box" || return 1
             echo "$sb_name" > "$WORKDIR/sb.txt"
@@ -393,7 +393,7 @@ download_binaries() {
         AGG="$ag_name"
     else
         AGG=$(<"$WORKDIR/ag.txt")
-        [[[ -f "$WORKDIR/$AGG" ]] || {
+        [[ -f "$WORKDIR/$AGG" ]] || {
             local ag_name; ag_name=$(rand_name)
             download_binary "$cf_url" "$WORKDIR/$ag_name" "cloudflared" || return 1
             echo "$ag_name" > "$WORKDIR/ag.txt"
@@ -939,13 +939,13 @@ LOG="${WORKDIR}/cron.log"
 MAX_LOG_LINES=300
 
 # 日志截断（保留最新 300 行）
-if [[[ -f "$LOG" && $(wc -l < "$LOG") -gt $MAX_LOG_LINES ]]; then
+if [[ -f "$LOG" && $(wc -l < "$LOG") -gt $MAX_LOG_LINES ]]; then
     tail -n $MAX_LOG_LINES "$LOG" > "${LOG}.tmp" && mv "${LOG}.tmp" "$LOG"
 fi
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG"; }
 
 # ── 守护 sing-box ──
-if [[[ -f "$WORKDIR/sb.txt" ]]; then
+if [[ -f "$WORKDIR/sb.txt" ]]; then
     SBB=$(<"$WORKDIR/sb.txt")
     if ! pgrep -x "$SBB" > /dev/null 2>&1; then
         log "[WARN] sing-box 未运行，重启中..."
@@ -956,12 +956,12 @@ if [[[ -f "$WORKDIR/sb.txt" ]]; then
 fi
 
 # ── 守护 Argo ──
-if [[[ -f "$WORKDIR/ag.txt" ]]; then
+if [[ -f "$WORKDIR/ag.txt" ]]; then
     AGG=$(<"$WORKDIR/ag.txt")
     if ! pgrep -x "$AGG" > /dev/null 2>&1; then
         log "[WARN] Argo 未运行，重启中..."
         cd "$WORKDIR"
-        if [[[ -f "$WORKDIR/ARGO_AUTH.log" ]]; then
+        if [[ -f "$WORKDIR/ARGO_AUTH.log" ]]; then
             AUTH=$(<"$WORKDIR/ARGO_AUTH.log")
             nohup ./"$AGG" tunnel --no-autoupdate run --token "$AUTH" > /dev/null 2>&1 &
         else
@@ -1014,7 +1014,7 @@ setup_shortcut() {
 reset_ports() {
     # 删除所有已分配端口
     local portlist
-    portlist=$(devil port list | grep -E '^[0-9]+[[:space:]]+[a-zA-Z]+' | sed 's/^[[:space:]]*//')
+    portlist=$(devil port list | grep -E '^[0-9]+[[:space: ]]+[a-zA-Z]+' | sed 's/^[[:space: ]]*//')
     if [[ -n "$portlist" ]]; then
         while read -r line; do
             local p t
@@ -1053,7 +1053,7 @@ reset_ports() {
 
     # 更新 serv00keep.sh（如存在）
     local kf=~/serv00keep.sh
-    if [[[ -f "$kf" ]]; then
+    if [[ -f "$kf" ]]; then
         sed -i '' "s|vless_port='${old_vlp}'|vless_port='${VLESS_PORT}'|" "$kf" 2>/dev/null \
             || sed -i "s|vless_port='${old_vlp}'|vless_port='${VLESS_PORT}'|" "$kf"
         sed -i '' "s|vmess_port='${old_vmp}'|vmess_port='${VMESS_PORT}'|" "$kf" 2>/dev/null \
@@ -1065,7 +1065,7 @@ reset_ports() {
     start_singbox
 
     local argo_status
-    if [[[ -f "$WORKDIR/boot.log" ]]; then
+    if [[ -f "$WORKDIR/boot.log" ]]; then
         pgrep -x "$AGG" > /dev/null 2>&1 && green "Argo 临时隧道运行中" || { start_argo; }
     else
         pgrep -x "$AGG" > /dev/null 2>&1 \
@@ -1087,12 +1087,12 @@ reset_argo() {
     cur_vmess_port=$(jq -r '.inbounds[] | select(.tag=="vmess-ws-in") | .listen_port' config.json 2>/dev/null)
 
     echo
-    if [[[ -f "boot.log" ]]; then
+    if [[ -f "boot.log" ]]; then
         green "当前: Argo 临时隧道"
     else
         green "当前: Argo 固定隧道"
-        [[[ -f "ARGO_DOMAIN_show.log" ]] && purple "  域名: $(< ARGO_DOMAIN_show.log)"
-        [[[ -f "ARGO_AUTH_show.log"   ]] && purple "  Token: $(< ARGO_AUTH_show.log)"
+        [[ -f "ARGO_DOMAIN_show.log" ]] && purple "  域名: $(< ARGO_DOMAIN_show.log)"
+        [[ -f "ARGO_AUTH_show.log"   ]] && purple "  Token: $(< ARGO_AUTH_show.log)"
         purple "  端口: ${cur_vmess_port}"
     fi
     echo
@@ -1106,7 +1106,7 @@ reset_argo() {
 
     # 更新 serv00keep.sh 中的 Argo 配置
     local kf=~/serv00keep.sh
-    if [[[ -f "$kf" && "$HONA" == "serv00" ]]; then
+    if [[ -f "$kf" && "$HONA" == "serv00" ]]; then
         if [[ -n "$ARGO_DOMAIN" ]]; then
             sed -i '' "s|ARGO_DOMAIN=''|ARGO_DOMAIN='${ARGO_DOMAIN}'|" "$kf" 2>/dev/null \
                 || sed -i "s|ARGO_DOMAIN=''|ARGO_DOMAIN='${ARGO_DOMAIN}'|" "$kf"
@@ -1290,7 +1290,7 @@ menu() {
 
     # 端口状态
     local portlist
-    portlist=$(devil port list 2>/dev/null | grep -E '^[0-9]+[[:space:]]+[a-zA-Z]+')
+    portlist=$(devil port list 2>/dev/null | grep -E '^[0-9]+[[:space: ]]+[a-zA-Z]+')
     if [[ -n "$portlist" ]]; then
         green "已分配端口："
         echo "$portlist"
@@ -1319,7 +1319,7 @@ menu() {
             || yellow "sing-box: ❌ 未运行，建议选 3 重启"
 
         # Argo 状态
-        if [[[ -f "$WORKDIR/boot.log" ]]; then
+        if [[ -f "$WORKDIR/boot.log" ]]; then
             local tmp_domain code
             tmp_domain=$(get_argo_domain)
             code=$(check_argo_domain "$tmp_domain")
@@ -1367,6 +1367,9 @@ menu() {
         0)  exit 0 ;;
         *)  red "无效选项，请输入 0-10" ;;
     esac
+    echo
+    reading "按回车键返回菜单..." _dummy
+    menu
 }
 
 menu
