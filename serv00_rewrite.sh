@@ -366,20 +366,51 @@ rand_name() {
 
 download_binaries() {
     cd "$WORKDIR" || return 1
-    local sb_url="https://github.com/yonggekkk/Cloudflare_vless_trojan/releases/download/serv00/sb"
-    local cf_url="https://github.com/yonggekkk/Cloudflare_vless_trojan/releases/download/serv00/server"
+
+    local gh_base="https://github.com/yonggekkk/Cloudflare_vless_trojan/releases/download/serv00"
+    local sb_urls=(
+        "${gh_base}/sb"
+        "https://ghproxy.com/${gh_base}/sb"
+        "https://mirror.ghproxy.com/${gh_base}/sb"
+        "https://gh.idayer.com/${gh_base}/sb"
+    )
+    local cf_urls=(
+        "${gh_base}/server"
+        "https://ghproxy.com/${gh_base}/server"
+        "https://mirror.ghproxy.com/${gh_base}/server"
+        "https://gh.idayer.com/${gh_base}/server"
+    )
+
+    # 依次尝试镜像列表，返回第一个下载成功的文件
+    try_mirrors() {
+        local dest="$1" label="$2"; shift 2
+        local urls=("$@")
+        for url in "${urls[@]}"; do
+            green "尝试 $label : $url"
+            if curl -fsSL --max-time 60 --retry 2 -o "$dest" "$url" 2>/dev/null; then
+                local sz; sz=$(stat -c%s "$dest" 2>/dev/null || echo 0)
+                if (( sz >= 1048576 )); then
+                    green "$label 下载成功 (${sz} bytes)"
+                    chmod +x "$dest"; return 0
+                fi
+            fi
+            yellow "$label 该源失败，尝试下一个..."
+        done
+        red "$label 所有下载源均失败，请检查服务器网络"
+        return 1
+    }
 
     # sing-box
     if [[ ! -s "$WORKDIR/sb.txt" ]]; then
         local sb_name; sb_name=$(rand_name)
-        download_binary "$sb_url" "$WORKDIR/$sb_name" "sing-box" || return 1
+        try_mirrors "$WORKDIR/$sb_name" "sing-box" "${sb_urls[@]}" || return 1
         echo "$sb_name" > "$WORKDIR/sb.txt"
         SBB="$sb_name"
     else
         SBB=$(<"$WORKDIR/sb.txt")
         [[ -f "$WORKDIR/$SBB" ]] || {
             local sb_name; sb_name=$(rand_name)
-            download_binary "$sb_url" "$WORKDIR/$sb_name" "sing-box" || return 1
+            try_mirrors "$WORKDIR/$sb_name" "sing-box" "${sb_urls[@]}" || return 1
             echo "$sb_name" > "$WORKDIR/sb.txt"
             SBB="$sb_name"
         }
@@ -388,20 +419,21 @@ download_binaries() {
     # cloudflared
     if [[ ! -s "$WORKDIR/ag.txt" ]]; then
         local ag_name; ag_name=$(rand_name)
-        download_binary "$cf_url" "$WORKDIR/$ag_name" "cloudflared" || return 1
+        try_mirrors "$WORKDIR/$ag_name" "cloudflared" "${cf_urls[@]}" || return 1
         echo "$ag_name" > "$WORKDIR/ag.txt"
         AGG="$ag_name"
     else
         AGG=$(<"$WORKDIR/ag.txt")
         [[ -f "$WORKDIR/$AGG" ]] || {
             local ag_name; ag_name=$(rand_name)
-            download_binary "$cf_url" "$WORKDIR/$ag_name" "cloudflared" || return 1
+            try_mirrors "$WORKDIR/$ag_name" "cloudflared" "${cf_urls[@]}" || return 1
             echo "$ag_name" > "$WORKDIR/ag.txt"
             AGG="$ag_name"
         }
     fi
     cd - > /dev/null
 }
+
 
 # ── 生成 Reality 密钥对 ───────────────────────────────────────────────────────
 gen_reality_keypair() {
