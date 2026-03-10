@@ -1055,7 +1055,7 @@ setup_shortcut() {
     mkdir -p "$bin_dir"
     # 复制自身作为快捷方式
     cp "$0" "$bin_dir/sb" 2>/dev/null || \
-        curl -sL "https://raw.githubusercontent.com/yonggekkk/sing-box-yg/main/serv00.sh" \
+        curl -sL "https://raw.githubusercontent.com/xiaolindean/singbox/refs/heads/main/serv00_rewrite.sh" \
              -o "$bin_dir/sb" 2>/dev/null
     chmod +x "$bin_dir/sb"
 
