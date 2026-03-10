@@ -702,9 +702,9 @@ gen_links() {
     HY2_LINK="hysteria2://${UUID}@${IP}:${HY2_PORT}?security=tls&sni=www.bing.com&alpn=h3&insecure=1#${SNB}-hy2-${USERNAME}"
 
     local VMTLS_ARGO_LINK VM_ARGO_LINK
-    VMTLS_ARGO_LINK="vmess://$(echo "{\"v\":\"2\",\"ps\":\"${SNB}-vmess-ws-tls-argo-${USERNAME}\",\"add\":\"www.visa.com.hk\",\"port\":\"8443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${argodomain}\",\"path\":\"/${UUID}-vm?ed=2048\",\"tls\":\"tls\",\"sni\":\"${argodomain}\",\"alpn\":\"\",\"fp\":\"\"}" | base64 -w0)"
+    VMTLS_ARGO_LINK="vmess://$(echo "{\"v\":\"2\",\"ps\":\"${SNB}-vmess-ws-tls-argo-${USERNAME}\",\"add\":\"104.16.0.1\",\"port\":\"8443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${argodomain}\",\"path\":\"/${UUID}-vm?ed=2048\",\"tls\":\"tls\",\"sni\":\"${argodomain}\",\"alpn\":\"\",\"fp\":\"\"}" | base64 -w0)"
 
-    VM_ARGO_LINK="vmess://$(echo "{\"v\":\"2\",\"ps\":\"${SNB}-vmess-ws-argo-${USERNAME}\",\"add\":\"www.visa.com.hk\",\"port\":\"8880\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${argodomain}\",\"path\":\"/${UUID}-vm?ed=2048\",\"tls\":\"\"}" | base64 -w0)"
+    VM_ARGO_LINK="vmess://$(echo "{\"v\":\"2\",\"ps\":\"${SNB}-vmess-ws-argo-${USERNAME}\",\"add\":\"104.16.0.1\",\"port\":\"8880\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${argodomain}\",\"path\":\"/${UUID}-vm?ed=2048\",\"tls\":\"\"}" | base64 -w0)"
 
     # 备用 IP 节点
     local VLESS_L1 VMWS_L1 HY2_L1 VLESS_L2 VMWS_L2 HY2_L2
@@ -731,7 +731,7 @@ gen_links() {
     if [[ "$argo_ok" == "404" ]]; then
         local cf_ips_tls=(104.16.0.0 104.17.0.0 104.18.0.0 104.19.0.0 104.20.0.0)
         local cf_ports_tls=(443 2053 2083 2087 2096)
-        local cf_ips_plain=(104.21.0.0 104.22.0.0 104.24.0.0 104.25.0.0 104.26.0.0 104.27.0.0)
+        local cf_ips_plain=(104.16.0.1 104.17.0.1 162.159.192.1 162.159.193.1 104.21.0.0 104.22.0.0)
         local cf_ports_plain=(80 8080 2052 2082 2086 2095)
         local i
         for i in "${!cf_ips_tls[@]}"; do
@@ -796,8 +796,8 @@ gen_links() {
             {type:"vless",tag:("vless-"+$snb+"-"+$user),server:$ip,server_port:$vp,uuid:$uuid,flow:"xtls-rprx-vision",tls:{enabled:true,server_name:$reym,utls:{enabled:true,fingerprint:"chrome"},reality:{enabled:true,public_key:$pubkey,short_id:""}}},
             {type:"vmess",tag:("vmess-"+$snb+"-"+$user),server:$ip,server_port:$vmp,uuid:$uuid,security:"auto",packet_encoding:"packetaddr",tls:{enabled:false},transport:{type:"ws",path:("/"+$uuid+"-vm"),headers:{Host:["www.bing.com"]}}},
             {type:"hysteria2",tag:("hy2-"+$snb+"-"+$user),server:$ip,server_port:$h2p,password:$uuid,tls:{enabled:true,server_name:"www.bing.com",insecure:true,alpn:["h3"]}},
-            {type:"vmess",tag:("vmess-tls-argo-"+$snb+"-"+$user),server:"www.visa.com.hk",server_port:8443,uuid:$uuid,security:"auto",packet_encoding:"packetaddr",tls:{enabled:true,server_name:$argodomain,utls:{enabled:true,fingerprint:"chrome"}},transport:{type:"ws",path:("/"+$uuid+"-vm"),headers:{Host:[$argodomain]}}},
-            {type:"vmess",tag:("vmess-argo-"+$snb+"-"+$user),server:"www.visa.com.hk",server_port:8880,uuid:$uuid,security:"auto",packet_encoding:"packetaddr",tls:{enabled:false},transport:{type:"ws",path:("/"+$uuid+"-vm"),headers:{Host:[$argodomain]}}},
+            {type:"vmess",tag:("vmess-tls-argo-"+$snb+"-"+$user),server:"104.16.0.1",server_port:8443,uuid:$uuid,security:"auto",packet_encoding:"packetaddr",tls:{enabled:true,server_name:$argodomain,utls:{enabled:true,fingerprint:"chrome"}},transport:{type:"ws",path:("/"+$uuid+"-vm"),headers:{Host:[$argodomain]}}},
+            {type:"vmess",tag:("vmess-argo-"+$snb+"-"+$user),server:"104.16.0.1",server_port:8880,uuid:$uuid,security:"auto",packet_encoding:"packetaddr",tls:{enabled:false},transport:{type:"ws",path:("/"+$uuid+"-vm"),headers:{Host:[$argodomain]}}},
             {tag:"direct",type:"direct"},
             {tag:"auto",type:"urltest",outbounds:[("vless-"+$snb+"-"+$user),("vmess-"+$snb+"-"+$user),("hy2-"+$snb+"-"+$user),("vmess-tls-argo-"+$snb+"-"+$user),("vmess-argo-"+$snb+"-"+$user)],url:"https://www.gstatic.com/generate_204",interval:"1m",tolerance:50,interrupt_exist_connections:false}
           ],
@@ -855,8 +855,8 @@ proxies:
 - {name: vless-reality-${SNB}-${USERNAME}, type: vless, server: ${IP}, port: ${VLESS_PORT}, uuid: ${UUID}, network: tcp, udp: true, tls: true, flow: xtls-rprx-vision, servername: ${REYM}, reality-opts: {public-key: ${PUBLIC_KEY}}, client-fingerprint: chrome}
 - {name: vmess-ws-${SNB}-${USERNAME}, type: vmess, server: ${IP}, port: ${VMESS_PORT}, uuid: ${UUID}, alterId: 0, cipher: auto, udp: true, tls: false, network: ws, servername: www.bing.com, ws-opts: {path: "/${UUID}-vm", headers: {Host: www.bing.com}}}
 - {name: hy2-${SNB}-${USERNAME}, type: hysteria2, server: ${IP}, port: ${HY2_PORT}, password: ${UUID}, alpn: [h3], sni: www.bing.com, skip-cert-verify: true, fast-open: true}
-- {name: vmess-tls-argo-${SNB}-${USERNAME}, type: vmess, server: www.visa.com.hk, port: 8443, uuid: ${UUID}, alterId: 0, cipher: auto, udp: true, tls: true, network: ws, servername: ${argodomain}, ws-opts: {path: "/${UUID}-vm", headers: {Host: ${argodomain}}}}
-- {name: vmess-argo-${SNB}-${USERNAME}, type: vmess, server: www.visa.com.hk, port: 8880, uuid: ${UUID}, alterId: 0, cipher: auto, udp: true, tls: false, network: ws, servername: ${argodomain}, ws-opts: {path: "/${UUID}-vm", headers: {Host: ${argodomain}}}}
+- {name: vmess-tls-argo-${SNB}-${USERNAME}, type: vmess, server: 104.16.0.1, port: 8443, uuid: ${UUID}, alterId: 0, cipher: auto, udp: true, tls: true, network: ws, servername: ${argodomain}, ws-opts: {path: "/${UUID}-vm", headers: {Host: ${argodomain}}}}
+- {name: vmess-argo-${SNB}-${USERNAME}, type: vmess, server: 104.16.0.1, port: 8880, uuid: ${UUID}, alterId: 0, cipher: auto, udp: true, tls: false, network: ws, servername: ${argodomain}, ws-opts: {path: "/${UUID}-vm", headers: {Host: ${argodomain}}}}
 
 proxy-groups:
 - {name: Auto, type: url-test, url: https://www.gstatic.com/generate_204, interval: 300, tolerance: 50, proxies: [vless-reality-${SNB}-${USERNAME}, vmess-ws-${SNB}-${USERNAME}, hy2-${SNB}-${USERNAME}, vmess-tls-argo-${SNB}-${USERNAME}, vmess-argo-${SNB}-${USERNAME}]}
